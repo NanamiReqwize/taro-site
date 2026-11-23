@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Таро — задай вопрос картам</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07040f;--gold:#d9b46a;--gold2:#f6e6b8;--ink:#ece6f5;--mute:#a094bd;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:400 17px/1.65 Jost,system-ui,sans-serif;overflow-x:hidden}
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+.nb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.5;z-index:0;animation:drift 22s ease-in-out infinite alternate}
+.n1{width:60vmax;height:60vmax;left:-20vmax;top:-20vmax;background:#4a1f8f}
+.n2{width:50vmax;height:50vmax;right:-15vmax;bottom:-15vmax;background:#7a1f55;animation-delay:-9s}
+@keyframes drift{to{transform:translate(8vmax,6vmax) scale(1.15)}}
+#mand{position:fixed;left:50%;top:50%;width:min(130vmin,900px);margin:calc(min(130vmin,900px)/-2) 0 0 calc(min(130vmin,900px)/-2);opacity:.16;z-index:0;animation:spin 140s linear infinite;pointer-events:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:34px 16px 70px}
+h1{font:700 clamp(54px,12vw,110px)/1 "Cormorant Garamond",Georgia,serif;text-align:center;margin:0;letter-spacing:.06em;background:linear-gradient(100deg,#b88a3a 20%,#fff3c8 45%,#b88a3a 70%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;filter:drop-shadow(0 0 22px #d9b46a55)}
+@keyframes shine{to{background-position:-250% 0}}
+.sub{text-align:center;color:var(--mute);margin:8px auto 28px;max-width:540px;animation:rise 1.4s both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+.ask{display:flex;flex-direction:column;gap:14px;max-width:640px;margin:0 auto;animation:rise 1.4s .3s both}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg button{background:#150e2899;color:var(--ink);border:1px solid #5a4690;font-size:15px;padding:10px 6px;line-height:1.3;backdrop-filter:blur(6px)}
+.seg button b{display:block;font:700 22px "Cormorant Garamond",serif;color:var(--gold2)}
+.seg button.on{border-color:var(--gold);background:#2a1a52;box-shadow:0 0 22px #d9b46a55}
+textarea{width:100%;min-height:96px;resize:vertical;background:#150e28cc;border:1px solid #5a4690;border-radius:12px;color:var(--ink);font:inherit;padding:14px 16px;transition:.3s}
+textarea:focus{border-color:var(--gold);box-shadow:0 0 28px #d9b46a44}
+textarea.err{border-color:#e0607e;animation:sh .35s}
+@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+button{font:500 17px Jost,sans-serif;padding:13px 22px;border-radius:12px;border:1px solid var(--gold);cursor:pointer;transition:.25s}
+button:focus-visible,textarea:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
+#go,#again{background:linear-gradient(180deg,#f0d58e,#b58d3f);color:#2a1a05;position:relative;overflow:hidden;animation:pulse 2.6s infinite}
+#go::after,#again::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,#fff9,transparent);transform:skewX(-20deg);animation:sweep 3s infinite}
+@keyframes sweep{60%,100%{left:130%}}
+@keyframes pulse{50%{box-shadow:0 0 30px #d9b46a99}}
+#again{margin:26px auto 0;display:block}
+[hidden]{display:none!important}
+#hint{text-align:center;font:italic 500 22px "Cormorant Garamond",serif;color:var(--gold2);margin:10px 0 18px;min-height:1.5em;animation:rise 1s both}
+#slots{display:flex;justify-content:center;gap:clamp(8px,2.4vw,24px);margin-bottom:26px}
+.slot{width:var(--sw);text-align:center}
+#slots.n1{--sw:clamp(110px,30vw,150px)}#slots.n3{--sw:clamp(84px,24vw,140px)}#slots.n5{--sw:clamp(56px,17vw,120px)}
+.sl{font:italic 500 clamp(12px,2.8vw,17px)/1.2 "Cormorant Garamond",serif;color:var(--mute);min-height:2.4em;margin-bottom:6px}
+.box{position:relative;aspect-ratio:1/1.65;border:1px dashed #6b559f;border-radius:10px;animation:bx 3s ease-in-out infinite}
+@keyframes bx{50%{border-color:var(--gold);box-shadow:0 0 18px #d9b46a33}}
+.card{position:absolute;inset:0;perspective:900px;visibility:hidden}
+.card.in{visibility:visible}
+.inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform 1s cubic-bezier(.2,.7,.2,1)}
+.card.flip .inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:10px;border:2px solid var(--gold);overflow:hidden}
+.back,.fc,.k{background:radial-gradient(circle at 50% 50%,#d9b46a 0 5%,transparent 6%),repeating-conic-gradient(from 0deg at 50% 50%,#35195f 0 12deg,#1d0e3b 12deg 24deg);border:2px solid var(--gold);border-radius:8px}
+.back::before{content:"";position:absolute;inset:5px;border:1px solid #d9b46a88;border-radius:5px}
+.front{transform:rotateY(180deg);background:radial-gradient(circle at 50% 40%,#3a2070,#150a2e 70%);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:8% 4%;box-shadow:inset 0 0 30px #d9b46a33}
+.front::before{content:"";position:absolute;inset:4px;border:1px solid #d9b46a88;border-radius:6px}
+.card.rev .front{transform:rotateY(180deg) rotate(180deg)}
+.num{font:700 clamp(13px,3.2vw,22px) "Cormorant Garamond",serif;color:var(--gold)}
+.glyph{font-size:clamp(34px,9vw,84px);line-height:1;color:var(--gold2);text-shadow:0 0 18px var(--gold)}
+.nm{font:700 clamp(11px,2.7vw,19px)/1.1 "Cormorant Garamond",serif;text-align:center;color:var(--gold2);position:relative}
+.card.flip .front{animation:glow 2s .6s}
+@keyframes glow{40%{box-shadow:0 0 50px 8px #f6e6b8aa,inset 0 0 30px #d9b46a77}}
+.sp{position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;background:var(--gold2);box-shadow:0 0 12px var(--gold);opacity:0;animation:spk 1s ease-out forwards;pointer-events:none;z-index:5}
+@keyframes spk{0%{opacity:1;transform:rotate(var(--a)) translateX(0)}100%{opacity:0;transform:rotate(var(--a)) translateX(var(--d)) scale(.2)}}
+.cn{font:700 clamp(13px,3vw,19px)/1.2 "Cormorant Garamond",serif;color:var(--gold2);margin-top:8px;min-height:2.4em;opacity:0;transition:.8s .8s}
+.cn.show{opacity:1}
+#stage{position:relative;width:100%}
+#fanwrap{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;padding-bottom:6px}
+#fan{position:relative;margin:0 auto}
+.fc{position:absolute;left:calc(50% - var(--cw)/2);top:30px;width:var(--cw);height:var(--ch);transform:rotate(var(--a,0deg)) translateY(var(--ty,0px));transition:transform .9s cubic-bezier(.2,.8,.2,1),opacity .6s;pointer-events:none;box-shadow:0 4px 14px #0009}
+.fc.ready{pointer-events:auto;cursor:pointer}
+.fc.ready:hover{--ty:-28px;box-shadow:0 0 22px #f6e6b8aa;z-index:200}
+.fc.gone{opacity:0;pointer-events:none}
+#stage.done .fc{opacity:0;--ty:60px;pointer-events:none}
+#deck{position:absolute;left:calc(50% - var(--cw)/2);top:30px;width:var(--cw);height:var(--ch);transform:scale(1.35);transform-origin:50% 0;transition:opacity .6s}
+#deck.out{opacity:0}
+.k{position:absolute;inset:0;animation:rif 1.1s ease-in-out 2 both;animation-delay:calc(var(--i)*35ms);box-shadow:0 2px 8px #000a}
+@keyframes rif{0%,100%{transform:translate(0,calc(var(--i)*-1px))}30%{transform:translate(var(--dx),-12px) rotate(var(--r))}60%{transform:translate(calc(var(--dx)*.15),calc(var(--i)*-3px))}}
+#res{max-width:700px;margin:30px auto 0}
+#res p{margin:0 0 16px;animation:rise .9s both}
+#res b{color:var(--gold2);font-weight:500}
+#res .q{color:var(--mute)}
+#res .verdict{border:1px solid var(--gold);border-radius:14px;padding:18px 20px;font:500 clamp(20px,4vw,25px)/1.45 "Cormorant Garamond",Georgia,serif;background:#1a0f3acc;animation:rise 1s both,vglow 3s 1s infinite}
+@keyframes vglow{50%{box-shadow:0 0 34px #d9b46a77}}
+.note{text-align:center;color:var(--mute);font-size:14px;margin-top:44px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<canvas id="sky"></canvas><div class="nb n1"></div><div class="nb n2"></div>
+<svg id="mand" viewBox="0 0 400 400" fill="none" stroke="#d9b46a" stroke-width=".6"><circle cx="200" cy="200" r="195"/><circle cx="200" cy="200" r="185" stroke-dasharray="2 5"/><circle cx="200" cy="200" r="150"/><circle cx="200" cy="200" r="110" stroke-dasharray="8 4"/><g id="rays"></g></svg>
+<main>
+<h1>Таро</h1>
+<p class="sub" id="sub">Сосредоточься на вопросе. Колода перетасуется, а карты выберешь ты сам.</p>
+<section id="s1" class="ask">
+<div class="seg" id="seg">
+<button data-n="1"><b>1</b>карта<br>быстрый ответ</button>
+<button data-n="3" class="on"><b>3</b>карты<br>классика</button>
+<button data-n="5"><b>5</b>карт<br>глубокий расклад</button>
+</div>
+<textarea id="q" placeholder="Например: вернётся ли ко мне бывший? Стоит ли менять работу?" maxlength="300" aria-label="Ваш вопрос"></textarea>
+<button id="go">Тасовать колоду</button>
+</section>
+<section id="s2" hidden>
+<div id="hint"></div>
+<div id="slots"></div>
+<div id="stage"><div id="fanwrap"><div id="fan"></div></div><div id="deck"></div></div>
+</section>
+<section id="s3"><div id="res"></div><button id="again" hidden>Новый расклад</button></section>
+<p class="note">Полная колода из 78 карт. Гадание — игра и повод задуматься, а не замена решению.</p>
+</main>
+<script>
+const MA=[
+["Шут","✦","начало пути, лёгкость и смелость сделать первый шаг","безрассудство и страх перед шагом",0,-1],
+["Маг","☿","у вас есть воля и все ресурсы для действия","распылённость, обман или упущенные возможности",1,-1],
+["Верховная Жрица","☽","тайное знание и интуиция, время слушать себя","игнорирование чутья, скрытые мотивы",0,-1],
+["Императрица","♀","рост, достаток, забота и плодородная почва","застой, зависимость, перегиб в заботе",1,-1],
+["Император","♂","порядок, власть и надёжная опора","жёсткость, контроль или хаос",1,-1],
+["Иерофант","♆","традиция, наставник, проверенные правила","бунт против догм, навязанные чужие убеждения",0,0],
+["Влюблённые","♡","выбор сердцем, союз и согласие ценностей","разлад, сомнения и несовпадение желаний",1,-1],
+["Колесница","➤","победа, движение вперёд и контроль над курсом","потеря управления, разброд сил",1,-1],
+["Сила","♌","внутренняя сила и мягкое мужество","неуверенность, срыв, истощение",1,-1],
+["Отшельник","☆","уединение, мудрость и поиск собственного ответа","изоляция и бегство от людей",0,-1],
+["Колесо Фортуны","☸","поворот судьбы и удачный шанс","неудачная полоса, сопротивление переменам",1,-1],
+["Справедливость","⚖","честный итог и закономерные последствия","несправедливость, уход от ответственности",0,-1],
+["Повешенный","⟂","пауза, жертва ради нового взгляда","застой и бесполезная жертва",-1,-1],
+["Смерть","☠","конец старого и глубокая трансформация","цепляние за прошлое, затяжной переход",-1,-1],
+["Умеренность","≈","баланс, терпение и золотая середина","перекос, спешка и крайности",1,-1],
+["Дьявол","⛧","зависимость, соблазн и самообман","освобождение от оков и пагубной привязки",-1,1],
+["Башня","⚡","внезапный слом старого и жёсткое прозрение","отсроченный крах, страх перемен",-1,-1],
+["Звезда","★","надежда, исцеление и вера в лучшее","разочарование и потеря ориентира",1,-1],
+["Луна","☾","иллюзии, тревога и неясность","туман рассеивается, правда выходит наружу",-1,0],
+["Солнце","☀","радость, успех и ясность","временное затмение, радость откладывается",1,0],
+["Суд","♅","пробуждение, итог и важное решение","самокритика и откладывание решения",1,-1],
+["Мир","◎","завершение, целостность и награда","незавершённость, не хватает последнего шага",1,0]];
+const RM=["0","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII","XIV","XV","XVI","XVII","XVIII","XIX","XX","XXI"];
+const SU=[["Жезлов","♣","в делах, энергии и стремлениях"],["Кубков","♥","в чувствах и отношениях"],["Мечей","♠","в мыслях, словах и конфликтах"],["Пентаклей","♦","в деньгах, работе и быте"]];
+const RK=[["Туз","1","новое начало и чистая энергия","упущенный шанс",1,-1],["Двойка","2","выбор и равновесие","нерешительность",0,-1],["Тройка","3","рост и сотрудничество","задержка и расхождение",1,0],["Четвёрка","4","устойчивость и отдых","застой",0,-1],["Пятёрка","5","конфликт и испытание","примирение после спора",-1,0],["Шестёрка","6","гармония и помощь","возврат к старому",1,-1],["Семёрка","7","проверка стойкости","сомнения и усталость",0,-1],["Восьмёрка","8","движение и усердие","спешка и разброд",1,-1],["Девятка","9","опыт и близость к финалу","истощение",0,-1],["Десятка","10","полнота цикла","перегруз",0,-1],["Паж","Пж","весть и любопытство","незрелость",1,-1],["Рыцарь","Рц","стремительное действие","горячность",1,-1],["Королева","Кр","зрелость и мудрость","закрытость",1,-1],["Король","Кл","мастерство и власть","властность",1,-1]];
+const DECK=[];
+MA.forEach((m,i)=>DECK.push({n:m[0],g:m[1],r:RM[i],u:m[2],v:m[3],wu:m[4],wv:m[5]}));
+SU.forEach(s=>RK.forEach(r=>DECK.push({n:r[0]+" "+s[0],g:s[1]+"\uFE0E",r:r[1],u:r[2]+" "+s[2],v:r[3]+" "+s[2],wu:r[4],wv:r[5]})));
+const L={love:["Что было между вами","Что происходит сейчас","Куда ведут чувства"],work:["Корни ситуации","Обстановка сейчас","Чем всё обернётся"],general:["Прошлое","Настоящее","Будущее"]};
+L.money=L.work;
+const L1=["Ответ карт"],L5=["Суть ситуации","Что мешает","Что помогает","Скрытое влияние","Исход"];
+const W={1:[1],3:[.5,1,1.5],5:[1,0,1,.5,2]};
+const V={
+love:{yes:"В сердечных делах карты благосклонны: чувства и обстоятельства движутся в вашу пользу. Говорите открыто и не тяните.",mixed:"В любви ничего не решено окончательно: многое зависит от ваших честных слов и поступков, а не от судьбы.",no:"Карты предупреждают: на пути много преград. Не давите, дайте себе и ситуации время и берегите себя."},
+work:{yes:"Для дел расклад сильный: пора действовать, шансы на успех выше обычного.",mixed:"Исход зависит от подготовки и выдержки. Взвесьте риски и сделайте то, что в вашей власти.",no:"Расклад осторожный: лучше пересмотреть план, укрепить слабые места и не спешить с рискованным шагом."},
+money:{yes:"Финансовый поток благоприятен: разумные решения могут окупиться.",mixed:"Деньги пойдут по золотой середине: избегайте импульсивных трат и считайте всё заранее.",no:"Карты советуют беречь ресурсы: отложите крупные траты и рискованные сделки."},
+general:{yes:"Ответ скорее «да»: карты складываются в вашу пользу, можно действовать уверенно.",mixed:"Ответ неоднозначен: всё зависит от вашего выбора, судьба не предрешена жёстко.",no:"Ответ скорее «нет» или «не сейчас»: карты советуют подождать и пересмотреть план."}};
+function cat(q){q=q.toLowerCase();
+if(/любов|отношен|верн[её]тся|бывш|муж|жен[аы]|парн|девушк|чувств|свидан|брак|нрав|измен/.test(q))return"love";
+if(/деньг|финанс|доход|зарплат|куп|инвест|долг|прибыл|ипотек|кредит/.test(q))return"money";
+if(/работ|карьер|начальн|бизнес|проект|уволь|собеседован|учёб|учеб|экзамен|поступ|переезд/.test(q))return"work";
+return"general"}
+const $=id=>document.getElementById(id),sleep=t=>new Promise(r=>setTimeout(r,t));
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function rnd(n){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+let N=3,busy=false;
+// звёздное небо
+const cv=$("sky"),cx=cv.getContext("2d");let st=[],shoot=null;
+function rs(){cv.width=innerWidth;cv.height=innerHeight;st=Array.from({length:Math.min(220,innerWidth/4)},()=>({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*1.4+.2,p:Math.random()*6,s:Math.random()*.03+.01}))}
+rs();addEventListener("resize",rs);
+(function loop(t){cx.clearRect(0,0,cv.width,cv.height);
+for(const s of st){s.p+=s.s;cx.globalAlpha=.35+.65*Math.abs(Math.sin(s.p));cx.fillStyle="#f6e6b8";cx.beginPath();cx.arc(s.x,s.y,s.r,0,7);cx.fill()}
+if(!shoot&&Math.random()<.004)shoot={x:Math.random()*cv.width,y:Math.random()*cv.height*.4,l:0};
+if(shoot){shoot.x+=14;shoot.y+=7;shoot.l++;cx.globalAlpha=1-shoot.l/40;cx.strokeStyle="#fff";cx.lineWidth=1.6;cx.beginPath();cx.moveTo(shoot.x,shoot.y);cx.lineTo(shoot.x-70,shoot.y-35);cx.stroke();if(shoot.l>40)shoot=null}
+requestAnimationFrame(loop)})();
+$("rays").innerHTML=Array.from({length:24},(_,i)=>`<line x1="200" y1="5" x2="200" y2="${i%2?30:55}" transform="rotate(${i*15} 200 200)"/>`).join("");
+// выбор расклада
+$("seg").onclick=e=>{const b=e.target.closest("button");if(!b)return;N=+b.dataset.n;[...$("seg").children].forEach(x=>x.classList.toggle("on",x===b))};
+$("go").onclick=start;
+$("q").addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))start()});
+async function start(){
+if(busy)return;const text=$("q").value.trim(),q=$("q");
+if(text.length<3){q.classList.add("err");q.focus();setTimeout(()=>q.classList.remove("err"),400);return}
+busy=true;const k=cat(text);
+const labels=N===1?L1:N===5?L5:L[k];
+$("s1").hidden=true;$("s2").hidden=false;$("sub").hidden=true;$("res").innerHTML="";$("again").hidden=true;
+$("hint").textContent="Колода тасуется… держите вопрос в мыслях";
+const sl=$("slots");sl.className="n"+N;
+sl.innerHTML=labels.map(l=>`<div class="slot"><div class="sl">${l}</div><div class="box"><div class="card"><div class="inner"><div class="face back"></div><div class="face front"></div></div></div></div><div class="cn"></div></div>`).join("");
+// колода
+const sm=Math.min(innerWidth,1100)<640,cw=sm?54:80,ch=Math.round(cw*1.65),half=(sm?60:55)*Math.PI/180,Dd=sm?300:520;
+const fw=Math.round(2*Dd*Math.sin(half)+cw+30),drop=Dd*(1-Math.cos(half)),fh=Math.round(30+ch*1.35+drop+30);
+const stage=$("stage");stage.className="";stage.style.cssText=`--cw:${cw}px;--ch:${ch}px;height:${fh}px`;
+const fan=$("fan");fan.style.cssText=`width:${fw}px;height:${fh}px`;fan.innerHTML="";
+const dk=$("deck");dk.className="";dk.innerHTML=Array.from({length:16},(_,i)=>`<div class="k" style="--i:${i};--dx:${i%2?cw*1.3:-cw*1.3}px;--r:${i%2?9:-9}deg"></div>`).join("");
+// настоящая тасовка Фишера-Йетса
+const d=DECK.map(c=>({...c,rev:rnd(100)<35}));
+for(let i=d.length-1;i>0;i--){const j=rnd(i+1);[d[i],d[j]]=[d[j],d[i]]}
+$("fanwrap").scrollLeft=(fw-$("fanwrap").clientWidth)/2;
+await sleep(2900);
+dk.classList.add("out");
+const fcs=d.map((c,i)=>{const e=document.createElement("div");e.className="fc";const a=((i/(d.length-1))-.5)*2*half*180/Math.PI;
+e.style.transformOrigin=`50% ${Dd}px`;e.style.transitionDelay=i*14+"ms";e.dataset.a=a;e.dataset.i=i;fan.appendChild(e);return e});
+fan.offsetWidth;fcs.forEach(e=>e.style.setProperty("--a",e.dataset.a+"deg"));
+await sleep(78*14+900);
+fcs.forEach(e=>{e.style.transitionDelay="";e.classList.add("ready")});
+$("hint").textContent=N===1?"Проведите по колоде и коснитесь карты, которая откликается":`Выберите ${N} ${N===3?"карты":"карт"}: ведите по колоде и касайтесь тех, что откликаются`;
+const picks=[];
+fan.onclick=async e=>{const el=e.target.closest(".fc.ready");if(!el||picks.length>=N)return;
+el.classList.remove("ready");el.classList.add("gone");
+const idx=picks.length,card=d[+el.dataset.i];picks.push(card);
+const sc=sl.children[idx].querySelector(".card");sc.classList.add("in");
+const fr=el.getBoundingClientRect(),to=sc.getBoundingClientRect();
+sc.animate([{transform:`translate(${fr.left+fr.width/2-to.left-to.width/2}px,${fr.top+fr.height/2-to.top-to.height/2}px) rotate(${el.dataset.a}deg) scale(${el.offsetWidth/to.width})`},{transform:"none"}],{duration:850,easing:"cubic-bezier(.2,.8,.2,1)"});
+$("hint").textContent=picks.length<N?`Выбрано ${picks.length} из ${N}`:"Карты выбраны…";
+if(picks.length===N){fcs.forEach(x=>x.classList.remove("ready"));await sleep(1100);stage.classList.add("done");await reveal(picks,labels,k,text)}};
+}
+async function reveal(p,labels,k,text){
+$("hint").textContent="Карты раскрываются…";
+const res=$("res");res.innerHTML=`<p class="q">Ваш вопрос: <i>«${esc(text)}»</i></p>`;
+let score=0;const w=W[N];
+for(let i=0;i<N;i++){const c=p[i],slot=$("slots").children[i],card=slot.querySelector(".card");
+score+=(c.rev?c.wv:c.wu)*w[i];
+card.querySelector(".front").innerHTML=`<div class="num">${c.r}</div><div class="glyph">${c.g}</div><div class="nm">${c.n}</div>`;
+card.classList.toggle("rev",c.rev);card.classList.add("flip");
+const box=slot.querySelector(".box");box.style.animation="none";box.style.borderColor="transparent";
+for(let s=0;s<12;s++){const sp=document.createElement("i");sp.className="sp";sp.style.cssText=`--a:${s*30}deg;--d:${60+rnd(60)}px;animation-delay:.5s`;box.appendChild(sp)}
+const cn=slot.querySelector(".cn");cn.textContent=c.n+(c.rev?" ↓":"");cn.classList.add("show");
+await sleep(1500);
+res.insertAdjacentHTML("beforeend",`<p><b>${labels[i]} — ${c.n}${c.rev?" (перевёрнутая)":""}.</b> ${(c.rev?c.v:c.u).replace(/^./,m=>m.toUpperCase())}.</p>`);
+res.lastElementChild.scrollIntoView({behavior:"smooth",block:"nearest"});
+await sleep(500)}
+const norm=score/w.reduce((a,b)=>a+b,0),v=norm>=.4?"yes":norm<=-.4?"no":"mixed";
+res.insertAdjacentHTML("beforeend",`<p class="verdict">${V[k][v]}</p>`);
+res.lastElementChild.scrollIntoView({behavior:"smooth",block:"nearest"});
+$("hint").textContent="Ответ карт";$("again").hidden=false;busy=false}
+$("again").onclick=()=>{$("s2").hidden=true;$("s1").hidden=false;$("sub").hidden=false;$("res").innerHTML="";$("again").hidden=true;$("q").value="";scrollTo({top:0,behavior:"smooth"});$("q").focus()};
+</script>
+</body>
+</html>
